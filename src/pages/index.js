@@ -25,8 +25,9 @@ export { default as AddNewBlog } from "./admin/blog/AddNewBlog";
 export { default as AdminBlogPage } from "./admin/blog/AdminBlogPage";
 export { default as AdminSingleBlogPage } from "./admin/blog/AdminSingleBlogPage";
 export { default as EditAdminBlog } from "./admin/blog/EditAdminBlog";
-
 export { default as AdminNotification } from "./admin/notifications/AdminNotification";
 export { default as AdminMessages } from "./admin/messages/AdminMessages";
 export { default as SingleError } from "./error/SingleError";
 export { default as NavigationPage } from "./Navigation";
+export { default as AdminEventPage } from "./admin/events/AdminEventPage";
+export { default as AddEventPage } from "./admin/events/AddEventPage";

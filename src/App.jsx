@@ -6,12 +6,14 @@ import { action as AddMiningMinerAction } from "./components/Admin/mining/miners
 import { loader as EditMiningMinerLoader } from "./components/Admin/mining/miners/EditMiningMiner";
 import { action as EditMiningMinerAction } from "./components/Admin/mining/miners/EditMiningMiner";
 import {
+  AddEventPage,
   AddInventoryItem,
   AddNewBlog,
   AddNewDataPage,
   AddNewProduct,
   AddRepairMiner,
   AdminBlogPage,
+  AdminEventPage,
   AdminInventoryPage,
   AdminLayout,
   AdminMessages,
@@ -181,6 +183,14 @@ function App() {
           path: "messages",
           element: <AdminMessages />,
           errorElement: <SingleError />,
+        },
+        {
+          path: "events",
+          element: <AdminEventPage />,
+        },
+        {
+          path: "events/new",
+          element: <AddEventPage />,
         },
       ],
     },

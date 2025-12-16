@@ -3,7 +3,7 @@ import { RiToolsFill } from "react-icons/ri";
 import { MdOutlineInventory } from "react-icons/md";
 import { MdCategory } from "react-icons/md";
 import { ImBlog } from "react-icons/im";
-import { MdDashboardCustomize } from "react-icons/md";
+import { MdDashboardCustomize, MdCelebration } from "react-icons/md";
 import { SiBitcoinsv } from "react-icons/si";
 import { IoMail, IoNotifications } from "react-icons/io5";
 export const adminNavLinks = [
@@ -48,6 +48,13 @@ export const adminNavLinks = [
     path: "/admin/blogs",
     urlword: "blogs",
     icon: <ImBlog />,
+  },
+  {
+    id: 10,
+    name: "Events",
+    path: "/admin/events",
+    urlword: "events",
+    icon: <MdCelebration />,
   },
   {
     id: 7,
