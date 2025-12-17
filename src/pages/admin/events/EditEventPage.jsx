@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import FormInput from "../../../components/FormInput";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { BsUpload } from "react-icons/bs";
-import { useAddEvent } from "../../../hooks/adminEvents/useAdminEvents";
+import {
+  useDeleteImage,
+  useEditEvent,
+  useGetSingleEvent,
+} from "../../../hooks/adminEvents/useAdminEvents";
 import Loading from "../../../components/Loading";
+import SingleError from "../../error/SingleError";
+import { IoTrash } from "react-icons/io5";
 import { toast } from "react-toastify";
-
 const modules = {
   toolbar: [
     [{ header: [1, 2, 3, 4, 5, false] }],
@@ -45,28 +50,40 @@ const formats = [
   "video",
 ];
 
-export default function AddEventPage() {
-  const [mainContent, setMainContent] = useState("");
-  const [bottomContent, setBottomContent] = useState("");
+export default function EditEventPage() {
+  const { id } = useParams();
+  const { isError, isLoading, data } = useGetSingleEvent({ id });
+  const [mainContent, setMainContent] = useState(data?.mainContent || "");
+  const [bottomContent, setBottomContent] = useState(data?.bottomContent || "");
   const [mainImage, setMainImage] = useState("");
   const [smallImage, setSmallImage] = useState("");
   const [extraImage, setExtraImage] = useState("");
   const [carouselImages, setCarouselImages] = useState([]);
-  const { isPending, addEvent } = useAddEvent();
+  const [oldMainImg, setOldMainImg] = useState(null);
+  const [oldsmallImg, setOldSmallImg] = useState(null);
+  const [oldExtraImg, setOldExtraImg] = useState(null);
+  const [oldCarouselImg, setOldCarouselImg] = useState([]);
+  const { isPending, deleteImage } = useDeleteImage();
+  const { isPending: editPending, editEvent } = useEditEvent();
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!mainImage) {
-      return toast.error("Main Image is required");
-    }
-    if (!smallImage) {
-      return toast.error("Small Image is required");
-    }
     const formData = new FormData(e.target);
     formData.append("mainContent", mainContent);
     formData.append("bottomContent", bottomContent);
-    await addEvent(formData);
-  };
+    editEvent({ data: formData, id });
+  }
+
+  useEffect(() => {
+    if (data) {
+      setMainContent(data.mainContent);
+      setBottomContent(data.bottomContent);
+      setOldMainImg(data.mainImage);
+      setOldSmallImg(data.smallImage);
+      setOldExtraImg(data.extraImage);
+      setOldCarouselImg(data.carouselImages);
+    }
+  }, [data]);
 
   useEffect(() => {
     return () => {
@@ -76,10 +93,14 @@ export default function AddEventPage() {
       carouselImages.forEach((img) => URL.revokeObjectURL(img));
     };
   }, [mainImage, smallImage, extraImage, carouselImages]);
-  return (
+  return isLoading ? (
+    <Loading />
+  ) : isError ? (
+    <SingleError />
+  ) : (
     <div className="p-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl">Add Event</h1>
+        <h1 className="text-2xl">Edit Event</h1>
         <Link
           to={"/admin/events"}
           className="bg-homeBg p-2 rounded-lg text-white hover:bg-blue-500 nav-link"
@@ -92,10 +113,17 @@ export default function AddEventPage() {
           name={"title"}
           title={"Event Title"}
           type={"text"}
+          defaultValue={data.title}
           placeholder={"Enter title for the event"}
           admin
         />
-        <FormInput name={"date"} title={"Event Date"} type={"date"} admin />
+        <FormInput
+          name={"date"}
+          title={"Event Date"}
+          type={"date"}
+          defaultValue={data.date.toString().slice(0, 10)}
+          admin
+        />
         <div>
           <label className="form-label">Main Event Content</label>
           <ReactQuill
@@ -107,6 +135,31 @@ export default function AddEventPage() {
             formats={formats}
           />
         </div>
+        {oldMainImg && (
+          <div>
+            <label className="form-label">Current Main Image</label>
+            <div className="flex flex-col items-center w-fit">
+              <img
+                src={oldMainImg.url}
+                alt="preview"
+                className="w-24 h-24 my-3 object-cover rounded-md"
+              />
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() =>
+                  deleteImage({
+                    eventId: id,
+                    imageType: "main",
+                    publicId: oldMainImg.publicId,
+                  })
+                }
+              >
+                <IoTrash className="text-red-500 cursor-pointer" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="my-3">
           <h4 className="form-label">
             Main Event Image (Image shown on Single Page)
@@ -139,9 +192,36 @@ export default function AddEventPage() {
           name={"location"}
           title={"Event Location"}
           type={"text"}
+          defaultValue={data.location}
           placeholder={"Enter the event location"}
           admin
         />
+        {isPending && <Loading />}
+        {oldsmallImg && (
+          <div>
+            <label className="form-label">Current Small Image</label>
+            <div className="flex flex-col items-center w-fit">
+              <img
+                src={oldsmallImg.url}
+                alt="preview"
+                className="w-24 h-24 my-3 object-cover rounded-md"
+              />
+              <button
+                onClick={() =>
+                  deleteImage({
+                    eventId: id,
+                    imageType: "small",
+                    publicId: oldsmallImg.publicId,
+                  })
+                }
+                disabled={isPending}
+                type="button"
+              >
+                <IoTrash className="text-red-500 cursor-pointer" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="my-3">
           <h4 className="form-label">Small Image (Image shown on the list)</h4>
           <label
@@ -173,10 +253,37 @@ export default function AddEventPage() {
           title={"Event Hosted By (if any)"}
           name={"hostedBy"}
           type={"text"}
+          defaultValue={data.hostedBy}
           placeholder={"Event hosted By"}
           admin
           notRequired
         />
+        {oldExtraImg && (
+          <div>
+            <label className="form-label">Current Extra Image</label>
+            <div className="flex flex-col items-center w-fit">
+              <img
+                src={oldExtraImg.url}
+                alt="preview"
+                className="w-24 h-24 my-3 object-cover rounded-md"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  deleteImage({
+                    eventId: id,
+                    publicId: oldExtraImg.publicId,
+                    imageType: "extra",
+                  });
+                }}
+                disabled={isPending}
+              >
+                <IoTrash className="text-red-500 cursor-pointer" />
+              </button>
+            </div>
+            {isPending && <Loading />}
+          </div>
+        )}
         <div className="my-3">
           <h4 className="form-label">
             Extra Image (Image shown between content)
@@ -222,6 +329,7 @@ export default function AddEventPage() {
           title={"Slug"}
           name={"slug"}
           type={"text"}
+          defaultValue={data.slug}
           placeholder={"Enter the slug for seo"}
           admin
         />
@@ -229,6 +337,7 @@ export default function AddEventPage() {
           title={"Alt Text"}
           name={"altText"}
           type={"text"}
+          defaultValue={data.altText}
           placeholder={"Enter alt text for all images"}
           admin
         />
@@ -237,12 +346,14 @@ export default function AddEventPage() {
           name={"metaTitle"}
           type={"text"}
           placeholder={"Enter Meta title for seo"}
+          defaultValue={data.metaTitle}
           admin
         />
         <FormInput
           title={"Meta Description"}
           name={"metaDescription"}
           type={"text"}
+          defaultValue={data.metaDescription}
           placeholder={"Enter Meta Description for seo"}
           admin
         />
@@ -250,9 +361,43 @@ export default function AddEventPage() {
           title={"Meta Keywords (comma seperated)"}
           name={"metaKeywords"}
           type={"text"}
+          defaultValue={data.metaKeywords}
           placeholder={"Enter Meta Keywords for seo"}
           admin
         />
+        {oldCarouselImg.length > 0 && (
+          <div>
+            <label className="form-label">Current Carousel Images</label>
+            <div className="flex gap-2 items-center">
+              {oldCarouselImg.map((x) => (
+                <div
+                  className="flex flex-col items-center w-fit"
+                  key={x.publicId}
+                >
+                  <img
+                    src={x.url}
+                    alt="preview"
+                    className="w-24 h-24 my-3 object-cover rounded-md"
+                  />
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() =>
+                      deleteImage({
+                        eventId: id,
+                        publicId: x.publicId,
+                        imageType: "carousel",
+                      })
+                    }
+                  >
+                    <IoTrash className="text-red-500 cursor-pointer" />
+                  </button>
+                </div>
+              ))}
+              {isPending && <Loading />}
+            </div>
+          </div>
+        )}
         <div className="my-3">
           <h4 className="form-label">
             Carousel Images (Image shown for carousel, if any)
@@ -294,11 +439,12 @@ export default function AddEventPage() {
         </div>
         <button
           type="submit"
+          disabled={editPending}
           className="px-4 py-2 rounded-md bg-homeBg hover:bg-homeBgGradient text-white w-fit self-end"
         >
-          Add Event
+          Edit Event
         </button>
-        {isPending && <Loading />}
+        {editPending && <Loading />}
       </form>
     </div>
   );

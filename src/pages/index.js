@@ -31,3 +31,5 @@ export { default as SingleError } from "./error/SingleError";
 export { default as NavigationPage } from "./Navigation";
 export { default as AdminEventPage } from "./admin/events/AdminEventPage";
 export { default as AddEventPage } from "./admin/events/AddEventPage";
+export { default as EventSinglePage } from "./admin/events/EventSinglePage";
+export { default as EditEventPage } from "./admin/events/EditEventPage";

@@ -1,0 +1,70 @@
+import React from "react";
+import { useGetSingleEvent } from "../../../hooks/adminEvents/useAdminEvents";
+import { Link, useParams } from "react-router-dom";
+import Loading from "../../../components/Loading";
+import SingleError from "../../error/SingleError";
+import Carousel from "../../../components/Carousel";
+import { CiLocationOn } from "react-icons/ci";
+import { IoCalendar } from "react-icons/io5";
+
+export default function EventSinglePage() {
+  const { id } = useParams();
+  const { isError, isLoading, data } = useGetSingleEvent({ id });
+  return isLoading ? (
+    <Loading />
+  ) : isError ? (
+    <SingleError />
+  ) : (
+    <div className="p-5">
+      <Link
+        to={"/admin/events"}
+        className="px-4 py-2 rounded-md text-white bg-homeBg hover:bg-homeBgGradient ms-auto"
+      >
+        Go Back
+      </Link>
+      <div className="flex gap-10 items-center mt-10">
+        <div className="md:w-1/3 flex flex-col gap-2">
+          <p className="font-semibold md:text-2xl text-lg">{data.title}</p>
+          <p className="flex gap-2 items-center">
+            <CiLocationOn />
+            <span>{data.location}</span>
+          </p>
+          <p className="flex gap-2 items-center">
+            <IoCalendar />
+            <span>{new Date(data.date).toLocaleDateString("en-US")}</span>
+          </p>
+          {data.hostedBy && (
+            <p>
+              Hosted By: <span className="font-semibold">{data.hostedBy}</span>
+            </p>
+          )}
+        </div>
+        <img
+          src={data.mainImage?.url}
+          alt={data.altText}
+          className="md:w-2/3 object-cover rounded-lg max-h-[500px]"
+        />
+      </div>
+      <p
+        className="text-gray-700 text-justify leading-9 my-5"
+        dangerouslySetInnerHTML={{ __html: data.mainContent }}
+      ></p>
+      {data.extraImage && (
+        <img
+          src={data.extraImage?.url}
+          alt={data.altText}
+          className="object-cover rounded-md my-5 max-w-[900px] mx-auto"
+        />
+      )}
+      {data.bottomContent && (
+        <p
+          className="text-gray-700 text-justify leading-9 my-5"
+          dangerouslySetInnerHTML={{ __html: data.bottomContent }}
+        ></p>
+      )}
+      <div className="my-5 max-w-[900px] mx-auto">
+        <Carousel images={data.carouselImages} alt={data.altText} />
+      </div>
+    </div>
+  );
+}

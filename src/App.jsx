@@ -27,8 +27,10 @@ import {
   DataPage,
   EditAdminBlog,
   EditDataPage,
+  EditEventPage,
   EditProduct,
   ErrorPage,
+  EventSinglePage,
   ForgotPassword,
   LoginPage,
   MiningPage,
@@ -191,6 +193,14 @@ function App() {
         {
           path: "events/new",
           element: <AddEventPage />,
+        },
+        {
+          path: "events/edit/:id",
+          element: <EditEventPage />,
+        },
+        {
+          path: "events/:id",
+          element: <EventSinglePage />,
         },
       ],
     },
