@@ -16,8 +16,9 @@ export default function EventList() {
         <p className="text-center my-5 text-lg">No Events Available</p>
       )}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 place-items-center">
-        {data.length > 1 &&
-          data.map((item) => <EventCard key={item._id} {...item} />)}
+        {data?.map((item) => (
+          <EventCard key={item._id} {...item} />
+        ))}
       </div>
     </div>
   );
