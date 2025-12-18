@@ -5,6 +5,7 @@ export default function ProductImageUpload({
   title,
   changeFunction,
   disabled,
+  name,
 }) {
   return (
     <div className="my-3">
@@ -19,7 +20,7 @@ export default function ProductImageUpload({
           className="hidden"
           onChange={changeFunction}
           accept="image/*"
-          required
+          name={name}
           disabled={disabled ? true : false}
         />
         <div className="text-xl">

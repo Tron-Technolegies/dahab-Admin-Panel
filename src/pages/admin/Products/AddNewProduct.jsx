@@ -6,85 +6,72 @@ import FormSelect from "../../../components/FormSelect";
 import { cryptoCurrency, manufacturer } from "../../../utils/dropdowns";
 import { GoDotFill } from "react-icons/go";
 import { useState } from "react";
-import useUploadFeaturedImage from "../../../hooks/adminProducts/useUploadFeaturedImage";
-import useUploadProductImage from "../../../hooks/adminProducts/useUploadProductImage";
-import useAddProduct from "../../../hooks/adminProducts/useAddProduct";
+
 import Loading from "../../../components/Loading";
+import { toast } from "react-toastify";
 
 export default function AddNewProduct() {
-  const [productName, setProductName] = useState("");
-  const [productImage, setProductImage] = useState("");
-  const [productImagePublicId, setProductImagePublicId] = useState("");
-  const [manufacturerItem, setManufacturerItem] = useState("");
-  const [cryptoCurrencyItem, setCryptoCurrencyItem] = useState([]);
-  const [hashRate, setHashRate] = useState(0);
-  const [power, setPower] = useState(0);
-  const [algorithm, setAlgorithm] = useState("");
-  const [price, setPrice] = useState(0);
-  const [featuredImage, setFeaturedImage] = useState("");
-  const [featuredImagePublicId, setFeaturedImagePublicId] = useState("");
-  const [description, setDescription] = useState("");
-  const [slug, setSlug] = useState("");
-  const [metaTitle, setMetaTitle] = useState("");
-  const [metaDescription, setMetaDescription] = useState("");
-  const [metaKeywords, setMetaKeywords] = useState("");
+  const [mainImage, setMainImage] = useState(null);
+  const [featuredImage, setFeaturedImage] = useState(null);
+  const [selectedCoins, setSelectedCoins] = useState([]);
+  const [specifications, setSpecifications] = useState([]);
+  const [faq, setFaq] = useState([]);
+  const [schema, setSchema] = useState("");
 
-  const {
-    loading: featuredLoading,
-    details: featuredDetails,
-    uploadFeaturedImage,
-  } = useUploadFeaturedImage();
+  //functions for specs form operations
+  function addSpecs() {
+    setSpecifications([...specifications, { spec: "", value: "" }]);
+  }
+  function updateSpecs(index, field, value) {
+    const updated = [...specifications];
+    updated[index][field] = value;
+    setSpecifications(updated);
+  }
+  function removeSpecs(index) {
+    setSpecifications(specifications.filter((_, i) => i !== index));
+  }
+  //functions for faqs form operations
+  function addFaqs() {
+    setFaq([...faq, { question: "", answer: "" }]);
+  }
+  function updateFaq(index, field, value) {
+    const updated = [...faq];
+    updated[index][field] = value;
+    setFaq(updated);
+  }
+  function removeFaq(index) {
+    setFaq(faq.filter((_, i) => i !== index));
+  }
 
-  const {
-    loading: productLoading,
-    details: productImageDetails,
-    uploadProductImage,
-  } = useUploadProductImage();
-
-  const { loading, addProduct } = useAddProduct();
-
-  const handleCryptoChange = (e) => {
-    const selectedValues = Array.from(
-      e.target.selectedOptions,
-      (option) => option.value
-    );
-    setCryptoCurrencyItem((prevSelected) => {
-      const currentSelections = [...prevSelected];
-
-      // Loop through the selectedValues and add/remove as necessary
-      selectedValues.forEach((value) => {
-        if (!currentSelections.includes(value)) {
-          currentSelections.push(value); // Add new selections
-        } else {
-          // Remove the value if it was deselected
-          currentSelections.splice(currentSelections.indexOf(value), 1);
-        }
-      });
-
-      return currentSelections;
-    });
-  };
-
-  const handleProductImage = async (e) => {
-    await uploadProductImage(e);
-  };
-
-  const handleFeaturedImage = async (e) => {
-    await uploadFeaturedImage(e);
-  };
-
-  useEffect(() => {
-    if (productImageDetails) {
-      setProductImage(productImageDetails.productImage);
-      setProductImagePublicId(productImageDetails.productImagePublicId);
+  //form submission
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!mainImage) {
+      toast.warn("Please add a main image");
+      return;
     }
-  }, [productImageDetails, productLoading]);
-  useEffect(() => {
-    if (featuredDetails) {
-      setFeaturedImage(featuredDetails.featuredImage);
-      setFeaturedImagePublicId(featuredDetails.featuredImagePublicId);
+    if (specifications.length < 1) {
+      toast.warn("Please add Atleast 1 specification");
+      return;
     }
-  }, [featuredDetails, featuredLoading]);
+    try {
+      JSON.parse(schema);
+    } catch (error) {
+      toast.error("Invalid JSON Schema");
+      return;
+    }
+    const formdata = new FormData(e.target);
+    formdata.append("specs", JSON.stringify(specifications));
+    formdata.append("faq", JSON.stringify(faq));
+    formdata.append("schema", schema);
+    console.log("specs:", formdata.get("specs"));
+    console.log("faq:", formdata.get("faq"));
+    console.log("schema:", formdata.get("schema"));
+    console.log("coins:", formdata.getAll("cryptoCurrencyItem"));
+    //send formdata to backend later
+    const data = Object.fromEntries(formdata);
+    console.log(data);
+  }
   return (
     <div>
       <div className="flex justify-between items-center">
@@ -96,169 +83,262 @@ export default function AddNewProduct() {
           Go Back
         </Link>
       </div>
-      <div className="my-10">
+      <form className="my-10" onSubmit={handleSubmit}>
+        {/* product name */}
         <FormInput
           title={"Name"}
           type={"text"}
+          name={"productName"}
           placeholder={"Enter Name"}
           admin
-          value={productName}
-          onchange={(e) => setProductName(e.target.value)}
         />
+        {/* product image */}
         <div className="flex gap-2 items-end">
           <ProductImageUpload
             title={"Product Image"}
-            changeFunction={(e) => handleProductImage(e)}
+            name={"productImage"}
+            changeFunction={(e) => setMainImage(e.target.files[0])}
           />
-          {productLoading && <Loading />}
-          {productImage && (
-            <div className="w-20 h-20 pb-5 rounded-lg overflow-hidden">
-              <img src={productImage} className="object-contain"></img>
-            </div>
+          {mainImage && (
+            <img
+              src={URL.createObjectURL(mainImage)}
+              alt="preview"
+              className="w-24 h-24 my-3 object-cover rounded-md"
+            />
           )}
         </div>
+        {/* {Manufacturer} */}
         <FormSelect
           title={"Manufacturer"}
           list={manufacturer}
-          value={manufacturerItem}
-          onchange={(e) => setManufacturerItem(e.target.value)}
+          name={"manufacturerItem"}
         />
-        <FormSelect
-          title={"Cryptocurrency"}
-          list={cryptoCurrency}
-          multi
-          value={cryptoCurrencyItem}
-          onchange={handleCryptoChange}
-        />
+        {/* cryptocurrency */}
+        <div className="form-row">
+          <label htmlFor="status" className="form-label">
+            CryptoCurrency
+          </label>
+          <div className="flex items-center">
+            <select
+              id="status"
+              multiple
+              onChange={(e) =>
+                setSelectedCoins([...selectedCoins, e.target.value])
+              }
+              name={"cryptoCurrencyItem"}
+              className={`w-full py-1 px-3 rounded-lg bg-transparent border border-[#0B578E] outline-none h-40`}
+            >
+              {cryptoCurrency?.map((item) => (
+                <option
+                  className="border-b py-1 border-gray-300 bg-[#CCF2FF] text-black"
+                  key={item}
+                  value={item}
+                >
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         <h3 className="mb-2">Selected Cryptocurrencies:</h3>
         <ul className="my-5">
-          {cryptoCurrencyItem.map((crypto, index) => (
-            <li key={index} className="flex gap-2 items-center">
-              <span>
-                <GoDotFill />
-              </span>
-              {crypto}
-            </li>
-          ))}
+          {selectedCoins.length && selectedCoins.join(", ")}
         </ul>
+        {/* {hashrate} */}
         <FormInput
           title={"HashRate"}
           type={"text"}
+          name={"hashRate"}
           admin
           placeholder={"Enter hashrate"}
-          value={hashRate}
-          onchange={(e) => setHashRate(e.target.value)}
         />
+        {/* power */}
         <FormInput
           title={"Power (Watts)"}
           type={"Number"}
+          name={"power"}
           admin
           placeholder={"Enter power in Watts"}
-          value={power}
-          onchange={(e) => setPower(e.target.value)}
         />
+        {/* ALGORITHM */}
         <FormInput
           title={"Algorithm"}
           type={"text"}
+          name={"algorithm"}
           admin
           placeholder={"Enter the algorithm of your Miner"}
-          value={algorithm}
-          onchange={(e) => setAlgorithm(e.target.value)}
         />
+        {/* PRICE */}
         <FormInput
           title={"Price (AED)"}
           type={"Number"}
+          name={"price"}
           admin
           placeholder={"Enter price of product"}
-          value={price}
-          onchange={(e) => setPrice(e.target.value)}
         />
+        {/* FEATURED IMAGE */}
         <div className="flex gap-2 items-end">
           <ProductImageUpload
             title={"Featured Image"}
-            changeFunction={(e) => handleFeaturedImage(e)}
+            name={"featuredImage"}
+            changeFunction={(e) => setFeaturedImage(e.target.files[0])}
           />
-          {featuredLoading && <Loading />}
           {featuredImage && (
             <img
-              src={featuredImage}
-              className="w-20 h-20 pb-5 rounded-lg overflow-hidden"
-            ></img>
+              src={URL.createObjectURL(featuredImage)}
+              alt="preview"
+              className="w-24 h-24 my-3 object-cover rounded-md"
+            />
           )}
         </div>
-
+        {/* DESCRIPTION */}
         <div className="form-row">
           <label className="form-label">Description</label>
           <div className="flex items-center">
             <textarea
               rows={3}
-              className="w-full py-1 px-3 rounded-lg bg-purple-50 border border-gray-300 text-gray-900"
+              name="description"
+              className="w-full py-1 px-3 outline-none rounded-lg bg-purple-50 border border-gray-300 text-gray-900"
               placeholder="Enter your description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
               required
             ></textarea>
           </div>
         </div>
+        {/* OVERVIEW */}
+        <div className="form-row">
+          <label className="form-label">Overview</label>
+          <div className="flex items-center">
+            <textarea
+              rows={3}
+              name="overview"
+              className="w-full py-1 px-3 outline-none rounded-lg bg-purple-50 border border-gray-300 text-gray-900"
+              placeholder="Enter product overview"
+              required
+            ></textarea>
+          </div>
+        </div>
+        {/* Specifications */}
+        <div className="mb-2">
+          <label className="form-label">Specifications</label>
+          {specifications?.map((item, index) => (
+            <div key={index} className="flex lg:flex-row flex-col gap-2 my-1">
+              <input
+                type="text"
+                value={item.spec}
+                onChange={(e) => updateSpecs(index, "spec", e.target.value)}
+                placeholder="Enter the specification"
+                className="w-full py-1 px-3 rounded-lg bg-white border  outline-none text-gray-900 h-11"
+              />
+              <input
+                type="text"
+                value={item.value}
+                onChange={(e) => updateSpecs(index, "value", e.target.value)}
+                placeholder="Enter value for specification"
+                className="w-full py-1 px-3 rounded-lg bg-white border  outline-none text-gray-900 h-11"
+              />
+              <button
+                type="button"
+                className="px-2 py-2 rounded-md bg-red-700 text-white"
+                onClick={() => removeSpecs(index)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="px-2 mt-3 py-2 rounded-md bg-homeBg text-white"
+            onClick={() => addSpecs()}
+          >
+            Add New Spec
+          </button>
+        </div>
+        {/* FAQS */}
+        <div className="mb-2">
+          <label className="form-label">FAQ'S</label>
+          {faq?.map((item, index) => (
+            <div key={index} className="flex lg:flex-row flex-col gap-2 my-1">
+              <input
+                type="text"
+                value={item.question}
+                onChange={(e) => updateFaq(index, "question", e.target.value)}
+                placeholder="Enter the Question"
+                className="w-full py-1 px-3 rounded-lg bg-white border  outline-none text-gray-900 h-11"
+              />
+              <input
+                type="text"
+                value={item.answer}
+                onChange={(e) => updateFaq(index, "answer", e.target.value)}
+                placeholder="Enter the answer"
+                className="w-full py-1 px-3 rounded-lg bg-white border  outline-none text-gray-900 h-11"
+              />
+              <button
+                type="button"
+                className="px-2 py-2 rounded-md bg-red-700 text-white"
+                onClick={() => removeFaq(index)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="px-2 mt-3 py-2 rounded-md bg-homeBg text-white"
+            onClick={() => addFaqs()}
+          >
+            Add New FAQ
+          </button>
+        </div>
+        {/* PRODUCT SCHEMA */}
+        <div>
+          <label>Product Schema (JSON)</label>
+          <textarea
+            rows={6}
+            className="w-full py-1 font-mono px-3 rounded-lg outline-none bg-purple-50 border border-gray-300 text-gray-900"
+            placeholder={`{
+    "@context": "https://schema.org",
+    "@type": "Product"
+  }`}
+            value={schema}
+            onChange={(e) => setSchema(e.target.value)}
+          ></textarea>
+        </div>
+        {/* META TAGS */}
         <FormInput
           type={"text"}
           title={"Product Slug"}
+          name={"slug"}
           admin
-          value={slug}
-          onchange={(e) => setSlug(e.target.value)}
           placeholder={"Enter Product slug"}
         />
         <FormInput
           type={"text"}
           admin
+          name={"metaTitle"}
           title={"Product Meta Title"}
-          value={metaTitle}
-          onchange={(e) => setMetaTitle(e.target.value)}
           placeholder={"Enter Product Meta Title"}
         />
         <FormInput
           type={"text"}
           admin
-          value={metaDescription}
-          onchange={(e) => setMetaDescription(e.target.value)}
+          name={"metaDescription"}
           title={"Product Meta Description"}
           placeholder={"Enter Product Meta description"}
         />
         <FormInput
           type={"text"}
           admin
-          value={metaKeywords}
-          onchange={(e) => setMetaKeywords(e.target.value)}
+          name={"metaKeywords"}
           title={"Product Meta Keywords"}
           placeholder={"Enter Product Meta keywords"}
         />
         <button
-          onClick={() =>
-            addProduct({
-              productImage,
-              productName,
-              productImagePublicId,
-              manufacturerItem,
-              cryptoCurrencyItem,
-              hashRate,
-              power,
-              algorithm,
-              price,
-              featuredImage,
-              featuredImagePublicId,
-              description,
-              slug,
-              metaDescription,
-              metaKeywords,
-              metaTitle,
-            })
-          }
+          type="submit"
           className="bg-homeBg p-2 rounded-lg text-white hover:bg-blue-500 nav-link"
         >
           Save Product
         </button>
-        {loading && <Loading />}
-      </div>
+      </form>
     </div>
   );
 }
