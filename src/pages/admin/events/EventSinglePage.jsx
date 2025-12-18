@@ -22,19 +22,21 @@ export default function EventSinglePage() {
       >
         Go Back
       </Link>
-      <div className="flex gap-10 items-center mt-10">
-        <div className="md:w-1/3 flex flex-col gap-2">
-          <p className="font-semibold md:text-2xl text-lg">{data.title}</p>
-          <p className="flex gap-2 items-center">
+      <div className="flex gap-10 md:flex-row flex-col items-center mt-10">
+        <div className="md:w-1/3 w-full flex flex-col gap-2">
+          <p className="font-semibold md:text-2xl text-lg md:text-left text-center w-full">
+            {data.title}
+          </p>
+          <p className="flex gap-2 items-center md:text-left text-center">
             <CiLocationOn />
             <span>{data.location}</span>
           </p>
-          <p className="flex gap-2 items-center">
+          <p className="flex gap-2 items-center md:text-left text-center">
             <IoCalendar />
             <span>{new Date(data.date).toLocaleDateString("en-US")}</span>
           </p>
           {data.hostedBy && (
-            <p>
+            <p className="md:text-left text-center w-full">
               Hosted By: <span className="font-semibold">{data.hostedBy}</span>
             </p>
           )}
@@ -53,7 +55,7 @@ export default function EventSinglePage() {
         <img
           src={data.extraImage?.url}
           alt={data.altText}
-          className="object-cover rounded-md my-5 max-w-[900px] mx-auto"
+          className="object-cover rounded-md my-5 lg:max-w-[900px] mx-auto"
         />
       )}
       {data.bottomContent && (
