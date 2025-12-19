@@ -1,27 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { MdVerified } from "react-icons/md";
-import useMakeFeatured from "../../../../hooks/adminProducts/useMakeFeatured";
-import Loading from "../../../Loading";
-import useRemoveFeatured from "../../../../hooks/adminProducts/useRemoveFeatured";
 
-export default function FeaturedSection({
-  img,
-  name,
-  isFeatured,
-  id,
-  refetch,
-}) {
-  const { loading, makeFeatured } = useMakeFeatured();
-  const { loading: removeLoading, removeFeatured } = useRemoveFeatured();
+import Loading from "../../../Loading";
+
+import {
+  useMakeFeatured,
+  useRemoveFeatured,
+} from "../../../../hooks/adminProducts/useProduct";
+
+export default function FeaturedSection({ img, name, isFeatured, id }) {
+  const { isPending, makeFeatured } = useMakeFeatured();
+  const { isPending: isPending2, removeFeatured } = useRemoveFeatured();
 
   const featured = async () => {
-    await makeFeatured(id);
-    await refetch();
+    makeFeatured({ id });
   };
 
   const unFeatured = async () => {
-    await removeFeatured(id);
-    await refetch();
+    removeFeatured({ id });
   };
 
   return (
@@ -40,11 +36,11 @@ export default function FeaturedSection({
             <button
               className="bg-homeBg p-2 text-white rounded-lg hover:bg-blue-500"
               onClick={featured}
-              disabled={loading}
+              disabled={isPending}
             >
               Make featured
             </button>
-            {loading && <Loading />}
+            {isPending && <Loading />}
           </>
         )}
         {isFeatured && (
@@ -52,11 +48,11 @@ export default function FeaturedSection({
             <button
               className="bg-red-500 p-2 text-white rounded-lg hover:bg-red-400"
               onClick={unFeatured}
-              disabled={removeLoading}
+              disabled={isPending2}
             >
               Remove Featured
             </button>
-            {removeLoading && <Loading />}
+            {isPending2 && <Loading />}
           </>
         )}
       </div>

@@ -3,283 +3,397 @@ import { Link, useParams } from "react-router-dom";
 import FormInput from "../../../components/FormInput";
 import ProductImageUpload from "../../../components/Admin/Products/ProductImageUpload";
 import FormSelect from "../../../components/FormSelect";
-import { cryptoCurrency, manufacturer } from "../../../utils/dropdowns";
-import useGetSingleAdminProduct from "../../../hooks/adminProducts/useGetSingleAdminProduct";
 import Loading from "../../../components/Loading";
-import { GoDotFill } from "react-icons/go";
-import useUpdateProductImage from "../../../hooks/adminProducts/useUpdateProductImage";
-import useUpdateFeaturedImage from "../../../hooks/adminProducts/useUpdateFeaturedImage";
-import useEditProduct from "../../../hooks/adminProducts/useEditProduct";
+import { cryptoCurrency, manufacturer } from "../../../utils/dropdowns";
+import { useGetSingleAdminProduct } from "../../../hooks/adminProducts/useProduct";
 
 export default function EditProduct() {
   const { id } = useParams();
-  const { loading, product } = useGetSingleAdminProduct({ id });
-  const {
-    loading: productImageLoading,
-    details: productImageDetails,
-    updateProductImage,
-  } = useUpdateProductImage();
+  const { isLoading, data } = useGetSingleAdminProduct({ id });
+  const [mainImage, setMainImage] = useState(null);
+  const [exMainImage, setExMainImage] = useState("");
+  const [exFeaturedImage, setExFeaturedImage] = useState(null);
+  const [featuredImage, setFeaturedImage] = useState(null);
+  const [selectedCoins, setSelectedCoins] = useState([]);
+  const [specifications, setSpecifications] = useState([]);
+  const [faq, setFaq] = useState([]);
+  const [schema, setSchema] = useState("");
 
-  const {
-    loading: featuredLoading,
-    details: featuredDetails,
-    updateFeaturedImage,
-  } = useUpdateFeaturedImage();
+  //functions for specs form operations
+  function addSpecs() {
+    setSpecifications([...specifications, { spec: "", value: "" }]);
+  }
+  function updateSpecs(index, field, value) {
+    const updated = [...specifications];
+    updated[index][field] = value;
+    setSpecifications(updated);
+  }
+  function removeSpecs(index) {
+    setSpecifications(specifications.filter((_, i) => i !== index));
+  }
+  //functions for faqs form operations
+  function addFaqs() {
+    setFaq([...faq, { question: "", answer: "" }]);
+  }
+  function updateFaq(index, field, value) {
+    const updated = [...faq];
+    updated[index][field] = value;
+    setFaq(updated);
+  }
+  function removeFaq(index) {
+    setFaq(faq.filter((_, i) => i !== index));
+  }
 
-  const { loading: editProductLoading, editProduct } = useEditProduct();
-
-  const [productName, setProductName] = useState("");
-  const [productImage, setProductImage] = useState("");
-  const [productImagePublicId, setProductImagePublicId] = useState("");
-  const [manufacturerItem, setManufacturerItem] = useState("");
-  const [cryptoCurrencyItem, setCryptoCurrencyItem] = useState([]);
-  const [hashRate, setHashRate] = useState(0);
-  const [power, setPower] = useState(0);
-  const [algorithm, setAlgorithm] = useState("");
-  const [price, setPrice] = useState(0);
-  const [featuredImage, setFeaturedImage] = useState("");
-  const [featuredImagePublicId, setFeaturedImagePublicId] = useState("");
-  const [description, setDescription] = useState("");
-  const [slug, setSlug] = useState("");
-  const [metaTitle, setMetaTitle] = useState("");
-  const [metaDescription, setMetaDescription] = useState("");
-  const [metaKeywords, setMetaKeywords] = useState("");
-
-  const handleCryptoChange = (e) => {
-    const selectedValues = Array.from(
-      e.target.selectedOptions,
-      (option) => option.value
-    );
-    setCryptoCurrencyItem((prevSelected) => {
-      const currentSelections = [...prevSelected];
-
-      // Loop through the selectedValues and add/remove as necessary
-      selectedValues.forEach((value) => {
-        if (!currentSelections.includes(value)) {
-          currentSelections.push(value); // Add new selections
-        } else {
-          // Remove the value if it was deselected
-          currentSelections.splice(currentSelections.indexOf(value), 1);
-        }
-      });
-
-      return currentSelections;
-    });
-  };
-  useEffect(() => {
-    if (product) {
-      setProductName(product.productName);
-      setProductImage(product.productImage);
-      setProductImagePublicId(product.productImagePublicId);
-      setManufacturerItem(product.manufacturer);
-      setCryptoCurrencyItem(product.cryptoCurrency);
-      setHashRate(product.hashRate);
-      setPower(product.power);
-      setAlgorithm(product.algorithm);
-      setPrice(product.price);
-      setFeaturedImage(product.featuredImage);
-      setFeaturedImagePublicId(product.featuredImagePublicId);
-      setDescription(product.description);
-      setSlug(product.slug ? product.slug : "");
-      setMetaDescription(
-        product.metaDescription ? product.metaDescription : ""
-      );
-      setMetaTitle(product.metaTitle ? product.metaTitle : "");
-      setMetaKeywords(product.metaKeywords ? product.metaKeywords : "");
+  //form submission
+  function handleSubmit(e) {
+    if (specifications.length < 1) {
+      toast.warn("Please add Atleast 1 specification");
+      return;
     }
-  }, [product]);
+    try {
+      JSON.parse(schema);
+    } catch (error) {
+      toast.error("Invalid JSON Schema");
+      return;
+    }
+    const formdata = new FormData(e.target);
+    formdata.append("specs", JSON.stringify(specifications));
+    formdata.append("faq", JSON.stringify(faq));
+    formdata.append("schema", schema);
+    formdata.append("cryptoCurrencyItem", JSON.stringify(selectedCoins));
+  }
 
   useEffect(() => {
-    if (productImageDetails) {
-      setProductImage(productImageDetails.productImage);
-      setProductImagePublicId(productImageDetails.productImagePublicId);
+    if (data) {
+      setExMainImage(data?.product?.productImage);
+      setExFeaturedImage(data?.product?.featuredImage);
+      setSelectedCoins(data?.product?.cryptoCurrency);
+      setFaq(data?.product?.productFaq);
+      setSpecifications(data?.product?.productSpecifications);
     }
-  }, [productImageDetails, productImageLoading]);
+  }, [data]);
+
   useEffect(() => {
-    if (featuredDetails) {
-      setFeaturedImage(featuredDetails.featuredImage);
-      setFeaturedImagePublicId(featuredDetails.featuredImagePublicId);
-    }
-  }, [featuredDetails, featuredLoading]);
-  return loading ? (
+    return () => {
+      if (mainImage) URL.revokeObjectURL(mainImage);
+      if (featuredImage) URL.revokeObjectURL(featuredImage);
+    };
+  }, [mainImage, featuredImage]);
+  return isLoading ? (
     <Loading />
   ) : (
     <div>
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl">Edit Product</h1>
+        <h1 className="text-2xl">Create Product</h1>
         <Link
-          to={`/admin/products/${product?._id}`}
+          to={`/admin/products/${id}`}
           className="bg-homeBg p-2 rounded-lg text-white hover:bg-blue-500 nav-link"
         >
           Go Back
         </Link>
       </div>
-      <div className="my-10">
+      <form className="my-10" onSubmit={handleSubmit}>
+        {/* product name */}
         <FormInput
           title={"Name"}
           type={"text"}
-          admin
+          name={"productName"}
           placeholder={"Enter Name"}
-          value={productName}
-          onchange={(e) => setProductName(e.target.value)}
+          defaultValue={data?.product?.productName}
+          admin
         />
+        {/* product image */}
+        {exMainImage && (
+          <div>
+            <label className="form-label">Current Product Image</label>
+            <div className="flex flex-col items-center w-fit">
+              <img
+                src={exMainImage}
+                alt="preview"
+                className="w-24 h-24 my-3 object-cover rounded-md"
+              />
+            </div>
+          </div>
+        )}
         <div className="flex gap-2 items-end">
           <ProductImageUpload
             title={"Product Image"}
-            changeFunction={(e) => updateProductImage({ e, id })}
+            name={"mainImage"}
+            changeFunction={(e) => setMainImage(e.target.files[0])}
           />
-          {productImageLoading && <Loading />}
-          {productImage && (
-            <div className="w-20 h-20 pb-5 rounded-lg overflow-hidden">
-              <img src={productImage} className="object-contain"></img>
-            </div>
+          {mainImage && (
+            <img
+              src={URL.createObjectURL(mainImage)}
+              alt="preview"
+              className="w-24 h-24 my-3 object-cover rounded-md"
+            />
           )}
         </div>
-
+        {/* {Manufacturer} */}
         <FormSelect
           title={"Manufacturer"}
           list={manufacturer}
-          value={manufacturerItem}
-          onchange={(e) => setManufacturerItem(e.target.value)}
+          name={"manufacturerItem"}
+          defaultValue={data?.product?.manufacturer}
         />
+        {/* PRODUCT CATEGORY */}
         <FormSelect
-          title={"Cryptocurrency"}
-          list={cryptoCurrency}
-          multi
-          value={cryptoCurrencyItem}
-          onchange={handleCryptoChange}
+          title={"Product Category"}
+          list={["None", "Air Cooled", "Immersion", "Hydro", "Home Miner"]}
+          name={"productCategory"}
+          defaultValue={data?.product?.productCategory}
         />
+        {/* cryptocurrency */}
+        <div className="form-row">
+          <label htmlFor="status" className="form-label">
+            CryptoCurrency
+          </label>
+          <div className="flex items-center">
+            <select
+              id="status"
+              multiple
+              onChange={(e) => {
+                setSelectedCoins([...selectedCoins, e.target.value]);
+              }}
+              value={selectedCoins}
+              className={`w-full py-1 px-3 rounded-lg bg-transparent border border-[#0B578E] outline-none h-40`}
+            >
+              {cryptoCurrency?.map((item) => (
+                <option
+                  className="border-b py-1 border-gray-300 bg-[#CCF2FF] text-black"
+                  key={item}
+                  value={item}
+                >
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         <h3 className="mb-2">Selected Cryptocurrencies:</h3>
         <ul className="my-5">
-          {cryptoCurrencyItem.length > 0 &&
-            cryptoCurrencyItem.map((crypto, index) => (
-              <li key={index} className="flex gap-2 items-center">
-                <span>
-                  <GoDotFill />
-                </span>
-                {crypto}
-              </li>
-            ))}
+          {selectedCoins.length && selectedCoins.join(", ")}
         </ul>
+        {/* {hashrate} */}
         <FormInput
           title={"HashRate"}
           type={"text"}
+          name={"hashRate"}
+          defaultValue={data?.product?.hashRate}
           admin
           placeholder={"Enter hashrate"}
-          value={hashRate}
-          onchange={(e) => setHashRate(e.target.value)}
         />
+        {/* power */}
         <FormInput
           title={"Power (Watts)"}
           type={"Number"}
+          name={"power"}
           admin
+          defaultValue={data?.product?.power}
           placeholder={"Enter power in Watts"}
-          value={power}
-          onchange={(e) => setPower(e.target.value)}
         />
+        {/* ALGORITHM */}
         <FormInput
           title={"Algorithm"}
           type={"text"}
+          name={"algorithm"}
+          defaultValue={data?.product?.algorithm}
           admin
           placeholder={"Enter the algorithm of your Miner"}
-          value={algorithm}
-          onchange={(e) => setAlgorithm(e.target.value)}
         />
+        {/* PRICE */}
         <FormInput
           title={"Price (AED)"}
           type={"Number"}
+          name={"price"}
+          defaultValue={data?.product?.price}
           admin
           placeholder={"Enter price of product"}
-          value={price}
-          onchange={(e) => setPrice(e.target.value)}
         />
+        {/* FEATURED IMAGE */}
+        {exFeaturedImage && (
+          <div>
+            <label className="form-label">Current Featured Image</label>
+            <div className="flex flex-col items-center w-fit">
+              <img
+                src={exFeaturedImage}
+                alt="preview"
+                className="w-24 h-24 my-3 object-cover rounded-md"
+              />
+            </div>
+          </div>
+        )}
         <div className="flex gap-2 items-end">
           <ProductImageUpload
             title={"Featured Image"}
-            changeFunction={(e) => updateFeaturedImage({ e, id })}
+            name={"featuredImage"}
+            changeFunction={(e) => setFeaturedImage(e.target.files[0])}
           />
-          {featuredLoading && <Loading />}
           {featuredImage && (
             <img
-              src={featuredImage}
-              className="w-20 h-20 pb-5 rounded-lg overflow-hidden"
-            ></img>
+              src={URL.createObjectURL(featuredImage)}
+              alt="preview"
+              className="w-24 h-24 my-3 object-cover rounded-md"
+            />
           )}
         </div>
+        {/* DESCRIPTION */}
         <div className="form-row">
           <label className="form-label">Description</label>
           <div className="flex items-center">
             <textarea
               rows={3}
-              className="w-full py-1 px-3 rounded-lg bg-purple-50 border border-gray-300 text-gray-900"
+              name="description"
+              defaultValue={data?.product?.description}
+              className="w-full py-1 px-3 outline-none rounded-lg bg-purple-50 border border-gray-300 text-gray-900"
               placeholder="Enter your description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
               required
             ></textarea>
           </div>
         </div>
+        {/* OVERVIEW */}
+        <div className="form-row">
+          <label className="form-label">Overview</label>
+          <div className="flex items-center">
+            <textarea
+              rows={3}
+              name="overview"
+              defaultValue={data?.product?.overview}
+              className="w-full py-1 px-3 outline-none rounded-lg bg-purple-50 border border-gray-300 text-gray-900"
+              placeholder="Enter product overview"
+              required
+            ></textarea>
+          </div>
+        </div>
+        {/* Specifications */}
+        <div className="mb-2">
+          <label className="form-label">Specifications</label>
+          {specifications?.map((item, index) => (
+            <div key={index} className="flex lg:flex-row flex-col gap-2 my-1">
+              <input
+                type="text"
+                value={item.spec}
+                onChange={(e) => updateSpecs(index, "spec", e.target.value)}
+                placeholder="Enter the specification"
+                className="w-full py-1 px-3 rounded-lg bg-white border  outline-none text-gray-900 h-11"
+              />
+              <input
+                type="text"
+                value={item.value}
+                onChange={(e) => updateSpecs(index, "value", e.target.value)}
+                placeholder="Enter value for specification"
+                className="w-full py-1 px-3 rounded-lg bg-white border  outline-none text-gray-900 h-11"
+              />
+              <button
+                type="button"
+                className="px-2 py-2 rounded-md bg-red-700 text-white"
+                onClick={() => removeSpecs(index)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="px-2 mt-3 py-2 rounded-md bg-homeBg text-white"
+            onClick={() => addSpecs()}
+          >
+            Add New Spec
+          </button>
+        </div>
+        {/* FAQS */}
+        <div className="mb-2">
+          <label className="form-label">FAQ'S</label>
+          {faq?.map((item, index) => (
+            <div key={index} className="flex lg:flex-row flex-col gap-2 my-1">
+              <input
+                type="text"
+                value={item.question}
+                onChange={(e) => updateFaq(index, "question", e.target.value)}
+                placeholder="Enter the Question"
+                className="w-full py-1 px-3 rounded-lg bg-white border  outline-none text-gray-900 h-11"
+              />
+              <input
+                type="text"
+                value={item.answer}
+                onChange={(e) => updateFaq(index, "answer", e.target.value)}
+                placeholder="Enter the answer"
+                className="w-full py-1 px-3 rounded-lg bg-white border  outline-none text-gray-900 h-11"
+              />
+              <button
+                type="button"
+                className="px-2 py-2 rounded-md bg-red-700 text-white"
+                onClick={() => removeFaq(index)}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="px-2 mt-3 py-2 rounded-md bg-homeBg text-white"
+            onClick={() => addFaqs()}
+          >
+            Add New FAQ
+          </button>
+        </div>
+        {/* PRODUCT SCHEMA */}
+        <div>
+          <label>Product Schema (JSON)</label>
+          <textarea
+            rows={6}
+            defaultValue={data?.product?.productSchema}
+            className="w-full py-1 font-mono px-3 rounded-lg outline-none bg-purple-50 border border-gray-300 text-gray-900"
+            placeholder={`{
+    "@context": "https://schema.org",
+    "@type": "Product"
+  }`}
+            value={schema}
+            onChange={(e) => setSchema(e.target.value)}
+          ></textarea>
+        </div>
+        {/* META TAGS */}
         <FormInput
           type={"text"}
           title={"Product Slug"}
+          name={"slug"}
+          defaultValue={data?.product?.slug}
           admin
-          value={slug}
-          onchange={(e) => setSlug(e.target.value)}
           placeholder={"Enter Product slug"}
         />
         <FormInput
           type={"text"}
           admin
+          name={"metaTitle"}
+          defaultValue={data?.product?.metaTitle}
           title={"Product Meta Title"}
-          value={metaTitle}
-          onchange={(e) => setMetaTitle(e.target.value)}
           placeholder={"Enter Product Meta Title"}
         />
         <FormInput
           type={"text"}
           admin
-          value={metaDescription}
-          onchange={(e) => setMetaDescription(e.target.value)}
+          name={"metaDescription"}
+          defaultValue={data?.product?.metaDescription}
           title={"Product Meta Description"}
           placeholder={"Enter Product Meta description"}
         />
         <FormInput
           type={"text"}
           admin
-          value={metaKeywords}
-          onchange={(e) => setMetaKeywords(e.target.value)}
+          name={"metaKeywords"}
+          defaultValue={data?.product?.metaKeywords}
           title={"Product Meta Keywords"}
           placeholder={"Enter Product Meta keywords"}
         />
         <button
-          onClick={() =>
-            editProduct({
-              id,
-              productName,
-              productImage,
-              productImagePublicId,
-              manufacturerItem,
-              cryptoCurrencyItem,
-              hashRate,
-              power,
-              algorithm,
-              price,
-              featuredImage,
-              featuredImagePublicId,
-              description,
-              slug,
-              metaDescription,
-              metaKeywords,
-              metaTitle,
-            })
-          }
+          type="submit"
+          // disabled={isPending}
           className="bg-homeBg p-2 rounded-lg text-white hover:bg-blue-500 nav-link"
-          disabled={editProductLoading}
         >
           Save Product
         </button>
-        {editProductLoading && <Loading />}
-      </div>
+        {/* {isPending && <Loading />} */}
+      </form>
     </div>
   );
 }

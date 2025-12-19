@@ -4,11 +4,12 @@ import { Link } from "react-router-dom";
 import FormInput from "../../../components/FormInput";
 import FormSelect from "../../../components/FormSelect";
 import { cryptoCurrency, manufacturer } from "../../../utils/dropdowns";
-import { GoDotFill } from "react-icons/go";
+
 import { useState } from "react";
 
 import Loading from "../../../components/Loading";
 import { toast } from "react-toastify";
+import { useAddProduct } from "../../../hooks/adminProducts/useProduct";
 
 export default function AddNewProduct() {
   const [mainImage, setMainImage] = useState(null);
@@ -17,6 +18,7 @@ export default function AddNewProduct() {
   const [specifications, setSpecifications] = useState([]);
   const [faq, setFaq] = useState([]);
   const [schema, setSchema] = useState("");
+  const { isPending, addProduct } = useAddProduct();
 
   //functions for specs form operations
   function addSpecs() {
@@ -64,14 +66,17 @@ export default function AddNewProduct() {
     formdata.append("specs", JSON.stringify(specifications));
     formdata.append("faq", JSON.stringify(faq));
     formdata.append("schema", schema);
-    console.log("specs:", formdata.get("specs"));
-    console.log("faq:", formdata.get("faq"));
-    console.log("schema:", formdata.get("schema"));
-    console.log("coins:", formdata.getAll("cryptoCurrencyItem"));
-    //send formdata to backend later
-    const data = Object.fromEntries(formdata);
-    console.log(data);
+    formdata.append("cryptoCurrencyItem", JSON.stringify(selectedCoins));
+
+    addProduct(formdata);
   }
+
+  useEffect(() => {
+    return () => {
+      if (mainImage) URL.revokeObjectURL(mainImage);
+      if (featuredImage) URL.revokeObjectURL(featuredImage);
+    };
+  }, [mainImage, featuredImage]);
   return (
     <div>
       <div className="flex justify-between items-center">
@@ -96,7 +101,7 @@ export default function AddNewProduct() {
         <div className="flex gap-2 items-end">
           <ProductImageUpload
             title={"Product Image"}
-            name={"productImage"}
+            name={"mainImage"}
             changeFunction={(e) => setMainImage(e.target.files[0])}
           />
           {mainImage && (
@@ -113,6 +118,12 @@ export default function AddNewProduct() {
           list={manufacturer}
           name={"manufacturerItem"}
         />
+        {/* PRODUCT CATEGORY */}
+        <FormSelect
+          title={"Product Category"}
+          list={["None", "Air Cooled", "Immersion", "Hydro", "Home Miner"]}
+          name={"productCategory"}
+        />
         {/* cryptocurrency */}
         <div className="form-row">
           <label htmlFor="status" className="form-label">
@@ -122,10 +133,10 @@ export default function AddNewProduct() {
             <select
               id="status"
               multiple
-              onChange={(e) =>
-                setSelectedCoins([...selectedCoins, e.target.value])
-              }
-              name={"cryptoCurrencyItem"}
+              onChange={(e) => {
+                setSelectedCoins([...selectedCoins, e.target.value]);
+              }}
+              value={selectedCoins}
               className={`w-full py-1 px-3 rounded-lg bg-transparent border border-[#0B578E] outline-none h-40`}
             >
               {cryptoCurrency?.map((item) => (
@@ -334,10 +345,12 @@ export default function AddNewProduct() {
         />
         <button
           type="submit"
+          disabled={isPending}
           className="bg-homeBg p-2 rounded-lg text-white hover:bg-blue-500 nav-link"
         >
           Save Product
         </button>
+        {isPending && <Loading />}
       </form>
     </div>
   );
