@@ -56,11 +56,13 @@ export default function AddNewProduct() {
       toast.warn("Please add Atleast 1 specification");
       return;
     }
-    try {
-      JSON.parse(schema);
-    } catch (error) {
-      toast.error("Invalid JSON Schema");
-      return;
+    if (schema) {
+      try {
+        JSON.parse(schema);
+      } catch (error) {
+        toast.error("Invalid JSON Schema");
+        return;
+      }
     }
     const formdata = new FormData(e.target);
     formdata.append("specs", JSON.stringify(specifications));

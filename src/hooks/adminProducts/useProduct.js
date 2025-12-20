@@ -124,3 +124,29 @@ export const useDeleteProduct = () => {
   });
   return { isPending, deleteProduct };
 };
+
+export const useEditProduct = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { isPending, mutate: editProduct } = useMutation({
+    mutationFn: async ({ id, data }) => {
+      await axios.patch(`${BASE_URL}/admin/product/${id}`, data, {
+        withCredentials: true,
+        headers: { "Content-Type": "multipart-formdata" },
+      });
+    },
+    onSuccess: (_, variables) => {
+      const { id } = variables;
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["single-product", id] });
+      toast.success("Product updated successfully");
+      navigate(`/admin/products/${id}`);
+    },
+    onError: (error) => {
+      toast.error(
+        error.response.data.msg || error.message || "something went wrong"
+      );
+    },
+  });
+  return { isPending, editProduct };
+};

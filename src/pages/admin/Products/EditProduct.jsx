@@ -5,7 +5,10 @@ import ProductImageUpload from "../../../components/Admin/Products/ProductImageU
 import FormSelect from "../../../components/FormSelect";
 import Loading from "../../../components/Loading";
 import { cryptoCurrency, manufacturer } from "../../../utils/dropdowns";
-import { useGetSingleAdminProduct } from "../../../hooks/adminProducts/useProduct";
+import {
+  useEditProduct,
+  useGetSingleAdminProduct,
+} from "../../../hooks/adminProducts/useProduct";
 
 export default function EditProduct() {
   const { id } = useParams();
@@ -18,6 +21,7 @@ export default function EditProduct() {
   const [specifications, setSpecifications] = useState([]);
   const [faq, setFaq] = useState([]);
   const [schema, setSchema] = useState("");
+  const { isPending, editProduct } = useEditProduct();
 
   //functions for specs form operations
   function addSpecs() {
@@ -46,21 +50,25 @@ export default function EditProduct() {
 
   //form submission
   function handleSubmit(e) {
+    e.preventDefault();
     if (specifications.length < 1) {
       toast.warn("Please add Atleast 1 specification");
       return;
     }
-    try {
-      JSON.parse(schema);
-    } catch (error) {
-      toast.error("Invalid JSON Schema");
-      return;
+    if (schema) {
+      try {
+        JSON.parse(schema);
+      } catch (error) {
+        toast.error("Invalid JSON Schema");
+        return;
+      }
     }
     const formdata = new FormData(e.target);
     formdata.append("specs", JSON.stringify(specifications));
     formdata.append("faq", JSON.stringify(faq));
     formdata.append("schema", schema);
     formdata.append("cryptoCurrencyItem", JSON.stringify(selectedCoins));
+    editProduct({ id, data: formdata });
   }
 
   useEffect(() => {
@@ -70,6 +78,7 @@ export default function EditProduct() {
       setSelectedCoins(data?.product?.cryptoCurrency);
       setFaq(data?.product?.productFaq);
       setSpecifications(data?.product?.productSpecifications);
+      setSchema(data?.product?.productSchema);
     }
   }, [data]);
 
@@ -342,7 +351,6 @@ export default function EditProduct() {
           <label>Product Schema (JSON)</label>
           <textarea
             rows={6}
-            defaultValue={data?.product?.productSchema}
             className="w-full py-1 font-mono px-3 rounded-lg outline-none bg-purple-50 border border-gray-300 text-gray-900"
             placeholder={`{
     "@context": "https://schema.org",
@@ -387,12 +395,12 @@ export default function EditProduct() {
         />
         <button
           type="submit"
-          // disabled={isPending}
+          disabled={isPending}
           className="bg-homeBg p-2 rounded-lg text-white hover:bg-blue-500 nav-link"
         >
           Save Product
         </button>
-        {/* {isPending && <Loading />} */}
+        {isPending && <Loading />}
       </form>
     </div>
   );
