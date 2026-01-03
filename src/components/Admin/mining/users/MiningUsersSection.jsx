@@ -7,13 +7,20 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 import PaginationComponent from "../PaginationComponent";
 import useGetAllUsers from "../../../../hooks/adminMining/useGetAllUsers";
 import Loading from "../../../Loading";
 import useUpdateWalletBalance from "../../../../hooks/adminMining/useUpdateWalletBalance";
+import { useGetMinerDropdowns } from "../../../../hooks/adminMining/useGetMinerDropdowns";
+import { useAssignMiner } from "../../../../hooks/adminMining/useAssignMiner";
 
 export default function MiningUsersSection() {
   const [page, setPage] = useState(1);
+  const [open, setOpen] = useState(false);
   const [keyWord, setKeyWord] = useState("");
   const [currentId, setCurrentId] = useState("");
   const [showEditBar, setShowEditBar] = useState("");
@@ -22,10 +29,30 @@ export default function MiningUsersSection() {
     currentPage: page,
     keyWord: keyWord,
   });
+  const { isLoading, data } = useGetMinerDropdowns();
+  const { isPending, assign } = useAssignMiner();
   const { loading: updateLoading, updateBalance } = useUpdateWalletBalance();
 
   function handlePageChange(event, value) {
     setPage(value);
+  }
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setCurrentId("");
+    setOpen(false);
+  };
+
+  async function handleAssign(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    formData.append("userId", currentId);
+    const data = Object.fromEntries(formData);
+    assign({ data });
+    handleClose();
   }
 
   useEffect(() => {
@@ -144,7 +171,7 @@ export default function MiningUsersSection() {
                     scope="row"
                     sx={{ width: "12.5%", textAlign: "center" }}
                   >
-                    <div>
+                    <div className="flex gap-2">
                       <button
                         className={`px-4 py-2 bg-homeBg hover:bg-homeBgGradient rounded-md text-white ${
                           x._id === currentId && showEditBar && "hidden"
@@ -155,6 +182,17 @@ export default function MiningUsersSection() {
                         }}
                       >
                         Update Wallet
+                      </button>
+                      <button
+                        className={`px-4 py-2 bg-homeBg hover:bg-homeBgGradient rounded-md text-white ${
+                          x._id === currentId && showEditBar && "hidden"
+                        }`}
+                        onClick={() => {
+                          setCurrentId(x._id);
+                          handleClickOpen();
+                        }}
+                      >
+                        Assign Miner
                       </button>
                       <div
                         className={`${
@@ -201,6 +239,50 @@ export default function MiningUsersSection() {
           />
         )}
       </div>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Assign Miner"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            <form
+              className="min-w-[300px] flex flex-col gap-2"
+              onSubmit={handleAssign}
+            >
+              <label className="text-sm">Select Miner</label>
+              <select
+                className="bg-gray-200 p-2 rounded-md"
+                defaultValue={data?.[0]?.name}
+                name="productId"
+              >
+                {data?.map((item) => (
+                  <option
+                    key={item._id}
+                    value={item._id}
+                  >{`${item.name}-${item.hashRate}TH/s-${item.power}Kw (${item.hostingFeePerKw}Kw/h)`}</option>
+                ))}
+              </select>
+              <label className="text-sm">Quantity</label>
+              <input
+                type="number"
+                className="bg-gray-200 p-2 rounded-md"
+                name="qty"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-homeBg hover:bg-homeBgGradient p-2 rounded-md text-white"
+              >
+                Assign Miner
+              </button>
+            </form>
+          </DialogContentText>
+        </DialogContent>
+      </Dialog>
+      {isPending && <Loading />}
     </div>
   );
 }
