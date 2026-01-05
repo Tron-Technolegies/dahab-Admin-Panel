@@ -931,7 +931,8 @@ export const productSchemas = [
     "@context": "https://schema.org/",
     "@type": "Product",
     name: "Bitmain Antminer AL1 Pro (16.6 Th/s)",
-    image: "https://res.cloudinary.com/dfe8yna1k/image/upload/v1752151561/w5oxpfu0afu7wlgivyjp.png",
+    image:
+      "https://res.cloudinary.com/dfe8yna1k/image/upload/v1752151561/w5oxpfu0afu7wlgivyjp.png",
     description:
       "The Bitmain Antminer AL1 Pro (16.6 Th/s) is a high-efficiency Blake3 ASIC miner built for mining Alephium (ALPH). It delivers a maximum hashrate of ~16.6 Th/s while consuming ~3,730 W (±5%), yielding a listed energy-efficiency of ~0.225 J/Gh, and is engineered for 24/7 professional mining setups.",
     brand: {

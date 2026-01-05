@@ -51,7 +51,7 @@ export default function EventCard({
             <p>{location}</p>
           </div>
 
-          <p className="font-semibold">{title}</p>
+          <p className="font-semibold">{title.slice(0, 30)}....</p>
           <div className="flex gap-7 items-center justify-center mt-5">
             <Link to={`/admin/events/${_id}`}>
               <IoEye className="text-gray-400 cursor-pointer" />
