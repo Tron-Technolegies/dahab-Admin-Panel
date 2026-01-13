@@ -380,6 +380,14 @@ export default function EditProduct() {
         <FormInput
           type={"text"}
           admin
+          name={"alt"}
+          defaultValue={data?.product?.imageAltText}
+          title={"Alt Text"}
+          placeholder={"Enter Product Alt text"}
+        />
+        <FormInput
+          type={"text"}
+          admin
           name={"metaDescription"}
           defaultValue={data?.product?.metaDescription}
           title={"Product Meta Description"}
