@@ -334,6 +334,13 @@ export default function AddNewProduct() {
         <FormInput
           type={"text"}
           admin
+          name={"alt"}
+          title={"Alt Text"}
+          placeholder={"Enter Product alt text"}
+        />
+        <FormInput
+          type={"text"}
+          admin
           name={"metaDescription"}
           title={"Product Meta Description"}
           placeholder={"Enter Product Meta description"}
