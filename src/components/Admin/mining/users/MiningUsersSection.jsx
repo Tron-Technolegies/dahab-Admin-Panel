@@ -12,23 +12,28 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import PaginationComponent from "../PaginationComponent";
-import useGetAllUsers from "../../../../hooks/adminMining/useGetAllUsers";
 import Loading from "../../../Loading";
 import useUpdateWalletBalance from "../../../../hooks/adminMining/useUpdateWalletBalance";
 import { useGetMinerDropdowns } from "../../../../hooks/adminMining/useGetMinerDropdowns";
 import { useAssignMiner } from "../../../../hooks/adminMining/useAssignMiner";
+import { useGetAllUsers } from "../../../../hooks/adminMining/useGetAllUsers";
+import SettlementPopup from "./SettlementPopup";
 
 export default function MiningUsersSection() {
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
   const [keyWord, setKeyWord] = useState("");
+  const [debounce, setDebounce] = useState("");
   const [currentId, setCurrentId] = useState("");
   const [showEditBar, setShowEditBar] = useState("");
   const [amount, setAmount] = useState(0);
-  const { loading, users, totalPages, refetch } = useGetAllUsers({
-    currentPage: page,
-    keyWord: keyWord,
-  });
+  const [openSettlement, setOpenSettlement] = useState(false);
+
+  const {
+    isError,
+    isLoading: loading,
+    data: userData,
+  } = useGetAllUsers({ currentPage: page, keyWord: debounce });
   const { isLoading, data } = useGetMinerDropdowns();
   const { isPending, assign } = useAssignMiner();
   const { loading: updateLoading, updateBalance } = useUpdateWalletBalance();
@@ -46,6 +51,11 @@ export default function MiningUsersSection() {
     setOpen(false);
   };
 
+  const handleOpenSettlement = () => setOpenSettlement(true);
+  const handleCloseSettlement = () => {
+    setCurrentId("");
+    setOpenSettlement(false);
+  };
   async function handleAssign(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -56,8 +66,12 @@ export default function MiningUsersSection() {
   }
 
   useEffect(() => {
-    refetch();
-  }, [page]);
+    const handler = setTimeout(() => {
+      setDebounce(keyWord);
+    }, 800);
+
+    return () => clearTimeout(handler);
+  }, [keyWord]);
   return (
     <div className="p-5">
       <p className="text-lg font-semibold">All Users</p>
@@ -69,12 +83,6 @@ export default function MiningUsersSection() {
           onChange={(e) => setKeyWord(e.target.value)}
           className="py-1 px-3 rounded-lg  border border-gray-300 text-gray-900 h-11"
         />
-        <button
-          className="py-3 px-3 bg-homeBg text-white rounded-full hover:bg-homeBgGradient nav-link"
-          onClick={() => refetch()}
-        >
-          <FaSearch />
-        </button>
       </div>
       {loading ? (
         <Loading />
@@ -131,7 +139,7 @@ export default function MiningUsersSection() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {users?.map((x) => (
+              {userData.users?.map((x) => (
                 <TableRow
                   key={x._id}
                   sx={{
@@ -173,6 +181,16 @@ export default function MiningUsersSection() {
                   >
                     <div className="flex gap-2">
                       <button
+                        onClick={() => {
+                          setCurrentId(x._id);
+                          handleOpenSettlement();
+                        }}
+                        className="px-4 py-2 bg-homeBg hover:bg-homeBgGradient rounded-md text-white"
+                      >
+                        Settle Wallet
+                      </button>
+
+                      <button
                         className={`px-4 py-2 bg-homeBg hover:bg-homeBgGradient rounded-md text-white ${
                           x._id === currentId && showEditBar && "hidden"
                         }`}
@@ -210,7 +228,7 @@ export default function MiningUsersSection() {
                         <button
                           onClick={async () => {
                             await updateBalance({ amount, id: currentId });
-                            refetch();
+
                             setAmount(0);
                             setCurrentId("");
                             setShowEditBar(false);
@@ -230,10 +248,17 @@ export default function MiningUsersSection() {
         </TableContainer>
       )}
 
+      {openSettlement && (
+        <SettlementPopup
+          open={openSettlement}
+          handleClose={handleCloseSettlement}
+          userId={currentId}
+        />
+      )}
       <div className="my-5">
-        {totalPages > 1 && (
+        {userData?.totalPages > 1 && (
           <PaginationComponent
-            totalPage={totalPages}
+            totalPage={userData?.totalPages}
             page={page}
             pageChange={handlePageChange}
           />
