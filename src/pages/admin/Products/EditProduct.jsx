@@ -9,6 +9,7 @@ import {
   useEditProduct,
   useGetSingleAdminProduct,
 } from "../../../hooks/adminProducts/useProduct";
+import { toast } from "react-toastify";
 
 export default function EditProduct() {
   const { id } = useParams();
@@ -360,6 +361,15 @@ export default function EditProduct() {
             onChange={(e) => setSchema(e.target.value)}
           ></textarea>
         </div>
+        {/* for profit mode calculator */}
+        <FormInput
+          type={"text"}
+          title={"Product Profit URL Word"}
+          name={"profitURL"}
+          admin
+          defaultValue={data?.product?.profitURLWord}
+          placeholder={"Enter Product name according to ASIC miner site"}
+        />
         {/* META TAGS */}
         <FormInput
           type={"text"}

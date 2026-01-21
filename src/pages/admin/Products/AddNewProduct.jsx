@@ -316,6 +316,14 @@ export default function AddNewProduct() {
             onChange={(e) => setSchema(e.target.value)}
           ></textarea>
         </div>
+        {/* for profit mode calculator */}
+        <FormInput
+          type={"text"}
+          title={"Product Profit URL Word"}
+          name={"profitURL"}
+          admin
+          placeholder={"Enter Product name according to ASIC miner site"}
+        />
         {/* META TAGS */}
         <FormInput
           type={"text"}
