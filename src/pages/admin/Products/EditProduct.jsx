@@ -367,6 +367,7 @@ export default function EditProduct() {
           title={"Product Profit URL Word"}
           name={"profitURL"}
           admin
+          notRequired
           defaultValue={data?.product?.profitURLWord}
           placeholder={"Enter Product name according to ASIC miner site"}
         />
