@@ -322,6 +322,7 @@ export default function AddNewProduct() {
           title={"Product Profit URL Word"}
           name={"profitURL"}
           admin
+          notRequired
           placeholder={"Enter Product name according to ASIC miner site"}
         />
         {/* META TAGS */}
