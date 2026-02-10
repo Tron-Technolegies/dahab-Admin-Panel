@@ -28,6 +28,9 @@ const locations = [
   "LIWA OFFICE",
   "WARRANTY CENTRE",
   "REPAIR CENTRE",
+  "MBZ HYDRO 1",
+  "ALAIN HYDRO 1",
+  "ALAIN HYDRO 2",
 ];
 
 export default function EditDataForm() {
