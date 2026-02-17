@@ -87,6 +87,9 @@ export default function DataPageHeader() {
               "LIWA OFFICE",
               "WARRANTY CENTRE",
               "REPAIR CENTRE",
+              "MBZ HYDRO 1",
+              "ALAIN HYDRO 1",
+              "ALAIN HYDRO 2",
             ].map((x, i) => (
               <option key={i}>{x}</option>
             ))}
